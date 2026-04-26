@@ -1,5 +1,5 @@
 class DeviceType:
-    def __init__(self, device_type_id, device_type_name, manufacturer):
+    def __init__(self, device_type_id = None, device_type_name = None, manufacturer = None):
         self.device_type_id = device_type_id
         self.device_type_name = device_type_name
         self.manufacturer = manufacturer
@@ -109,7 +109,7 @@ class DeviceType:
         self.manufacturer = manufacturer
 
 class TestTemplate:
-    def __init__(self, test_template_id, device_type_id, test_template_name, test_description):
+    def __init__(self, test_template_id = None, device_type_id = None, test_template_name = None, test_description = None):
         self.test_template_id = test_template_id
         self.device_type_id = device_type_id
         self.test_template_name = test_template_name
@@ -229,7 +229,7 @@ class TestTemplate:
 
 class RequirementTemplate:
 
-    def __init__(self, requirement_template_id, test_template_id, requirement_name):
+    def __init__(self, requirement_template_id = None, test_template_id = None, requirement_name = None):
             
             self.requirement_template_id = requirement_template_id
             self.test_template_id = test_template_id
