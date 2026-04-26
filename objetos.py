@@ -494,12 +494,12 @@ class Device:
     
     def delete(self, conn):
          # [HECHO] Hay que ver si interesa meter aqui que borre sus tests y requiremets, primero haria falta el metodo para borrar los test
+         # [REVIEW] Ya lo hacia solo el sql, no hace falta asi que lo borro
          # Comprueba que el objeto tenga id, el resto de parametros dan igual
         
 
         if self.device_id is not None:
-            
-            Test.delete_by_device(conn, self.device_id)
+        
             with conn:
                 cursor = conn.execute(
                     "DELETE FROM devices WHERE device_id = :device_id",
@@ -642,11 +642,8 @@ class Test:
             return True
         
     def delete(self, conn):
-         # Hay que ver si interesa meter aqui que borre sus tests y requiremets, primero haria falta el metodo para borrar los test
          # Comprueba que el objeto tenga id, el resto de parametros dan igual
         if self.test_id is not None:
-
-            Requirement.delete_by_test(conn, self.test_id)
 
             with conn:
 
@@ -669,9 +666,6 @@ class Test:
     def delete_by_device(cls, conn, device_id):
         # Comprueba que el device exista
         if Device.exists(conn, device_id):
-
-            for t in Test.load_by_device(conn, device_id):
-                Requirement.delete_by_test(conn, t.test_id)
 
             with conn:
                 cursor = conn.execute(
