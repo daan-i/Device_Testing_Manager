@@ -342,7 +342,7 @@ class RequirementTemplate:
         self.requirement_name = name
 
 class Device:
-    def __init__(self, device_id=None, device_type_id=None, device_name=None, serial_number=None, 
+    def __init__(self, device_id=None, device_type_id = None, device_name=None, serial_number=None, 
                  device_location=None, device_status=None, device_observations=None):
 
         self.device_id = device_id
@@ -358,12 +358,6 @@ class Device:
     #La idea es que los cambios se hagan con el objeto de aqui arriba, los datos a cambiar se meten en el con los metodos de ahora, y luego en el save
     #se hace un update de los valores que no son None, hay que cambir los templates luego
 
-    def change_device_type_id(self, conn, id):
-        #Para esto usamos el exist de antes, si no existe habria que meter una excepcion, problema de futuro
-        if(DeviceType.exists(conn, id)):
-            self.device_type_id = id
-        else:
-            print("Placeholder, meter exception aqui, device_type_id invalido")
     
     def change_name(self, name):
         self.device_name = name
@@ -531,18 +525,6 @@ class Test:
     def __repr__(self):
         return f"Test(Id={self.test_id}, Device={self.device_id}, Template={self.test_template_id}, Status={self.test_status}, Obs={self.test_observations})"
 
-    def change_device_id(self, conn, id):
-
-        if Device.exists(conn, id):
-            self.device_id = id
-        else:
-            print("Placeholder, meter excepcion, device_id invalido")
-
-    def change_template_id(self,conn, template_id):
-        if TestTemplate.exists(conn, template_id):
-            self.test_template_id = template_id
-        else:
-            print("Placeholder, meter excepcion, test_template_id invalido")
 
     def update_status(self, conn):
         RequirementList = Requirement.load_by_test(conn, self.test_id)
@@ -704,18 +686,6 @@ class Requirement:
 
     def __repr__(self):
         return f"Requirement(Id={self.requirement_id}, Template={self.requirement_template_id}, Test={self.test_id}, Status={self.requirement_status})"
-    
-    def change_test_id(self,conn, test_id):
-        if Test.exists(conn, test_id):
-            self.test_id = test_id
-        else:
-            print("Placeholder, meter excepcion, test_id invalido")
-        
-    def change_requirement_template_id(self, conn, requirement_template_id):
-        if RequirementTemplate.exists(conn, requirement_template_id):
-            self.requirement_template_id = requirement_template_id
-        else:
-            print("Placeholder, meter excepcion, requirement_template_id invalido")
 
     def change_status(self, conn, status):
         if status not in [True, False]:
