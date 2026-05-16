@@ -516,7 +516,7 @@ class Device:
         else:
             print("El device tiene una id nula, no se puede borrar")
     
-    def get_template(self, conn):
+    def get_type(self, conn):
         return DeviceType.load(conn, self.device_type_id)
 
 class Test:
@@ -544,8 +544,14 @@ class Test:
         else:
             print("Placeholder, meter excepcion, test_template_id invalido")
 
-    def update_status(self):
-        #Dependera de los requirements, hacer despues
+    def update_status(self, conn):
+        RequirementList = Requirement.load_by_test(conn, self.test_id)
+        aux = True
+        for Req in RequirementList:
+            if Req.requirement_status == False:
+                aux = False
+        self.test_status = aux
+        self.save(conn)
         return
     
     def change_observations(self, observations):
@@ -711,8 +717,13 @@ class Requirement:
         else:
             print("Placeholder, meter excepcion, requirement_template_id invalido")
 
-    def change_status(self, status):
+    def change_status(self, conn, status):
+        if status not in [True, False]:
+            print("Estatus invalido, meter excepcion aqui")
+            return
         self.requirement_status = status
+        self.save(conn)
+        Test.load(conn, self.test_id).update_status(conn)
 
     def save(self, conn):
         c = conn.cursor()
