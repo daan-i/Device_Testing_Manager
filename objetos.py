@@ -369,7 +369,19 @@ class Device:
         self.device_location = device_location
     
     def update_status(self, conn):
-        #Placeholder, device status dependera de test_status
+        #Saca todos los tests del device
+        preStatus = self.device_status
+        TestList = Test.load_by_device(conn, self.device_id)
+        aux = True
+        for test in TestList:
+            #Si algun test tiene False como estatus entonces el estatus del device es falso tambien
+            if test.test_status == False:
+                aux = False
+
+        #Actualiza y si el status ha cambiado lo sube a la db
+        self.device_status = aux
+        if preStatus != aux:
+            self.save(conn)
         return
     
     def change_observations(self, observation):
@@ -527,13 +539,21 @@ class Test:
 
 
     def update_status(self, conn):
+        preStatus = self.test_status
         RequirementList = Requirement.load_by_test(conn, self.test_id)
         aux = True
         for Req in RequirementList:
             if Req.requirement_status == False:
                 aux = False
         self.test_status = aux
-        self.save(conn)
+
+        #Si el estatus del test cambia, hace que el device compruebe su status
+        #Guarda el test solo si cambia el status para evitar entradas a la db innecesarias
+        #El save tiene que ir primero porque si no el Device no puede leer el cambio desde la db
+        if preStatus != aux:
+            self.save(conn)
+            Device.load(conn, self.device_id).update_status(conn)
+
         return
     
     def change_observations(self, observations):
@@ -742,7 +762,7 @@ class Requirement:
             print("No se ha encontrado la fila")
             return None
         
-        return cls(row[0], row[1], row[2], row[3])
+        return cls(row[0], row[1], row[2], bool(row[3]))
     
     @classmethod
     def load_all(cls, conn):
@@ -750,7 +770,7 @@ class Requirement:
                             FROM requirements""")
         rows = c.fetchall()
         
-        return [cls(row[0], row[1], row[2], row[3]) for row in rows] 
+        return [cls(row[0], row[1], row[2], bool(row[3])) for row in rows] 
 
     @classmethod
     def load_by_test(cls, conn, id):
@@ -760,7 +780,7 @@ class Requirement:
                                 {"test_id": id})
             rows = c.fetchall()
 
-            return [cls(row[0], row[1], row[2], row[3]) for row in rows] 
+            return [cls(row[0], row[1], row[2], bool(row[3])) for row in rows] 
         else:
             print("Placeholder, la id a cargar no es valida, meter excepcion")
             return
