@@ -1,3 +1,5 @@
+from excepciones import *
+
 class DeviceType:
     def __init__(self, device_type_id = None, device_type_name = None, manufacturer = None):
         self.device_type_id = device_type_id
@@ -26,7 +28,7 @@ class DeviceType:
                             "manufacturer": self.manufacturer,
                             "device_type_id": self.device_type_id})
                 if c.rowcount == 0:
-                    print("No se ha encontrado un objeto con ese id")
+                    raise NotFoundError(f"No se ha encontrado un objeto con la id {self.device_type_id}")
                 else:
                     print(f"Actualizado device_type con id {self.device_type_id}")
                         
@@ -42,8 +44,8 @@ class DeviceType:
         row = c.fetchone()
         
         if row is None:
-            print("No se ha encontrado la fila")
-            return None
+            raise NotFoundError("No se ha encontrado ningun Device con este DeviceType")
+            
         
         return cls(row[0], row[1], row[2])
 
@@ -51,6 +53,10 @@ class DeviceType:
     def load_all(cls, conn):
         c = conn.execute("SELECT * FROM device_types")
         rows = c.fetchall()
+
+        if not rows:
+            raise NotFoundError("No hay ningun DeviceType")
+            
         
         return [cls(row[0], row[1], row[2]) for row in rows] 
     
@@ -62,7 +68,11 @@ class DeviceType:
         )
         
         rows = c.fetchall()
-        
+
+        if not rows:
+            raise NotFoundError("No se ha encontrado ningun Device con este Manufacturer")
+            
+
         return [cls(row[0], row[1], row[2]) for row in rows]
     
     @classmethod
@@ -91,13 +101,13 @@ class DeviceType:
             #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
             #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
             if cursor.rowcount == 0:
-                print("No se ha encontrado un objeto con ese id")
+                raise NotFoundError(f"No se ha encontrado un objeto con el id de tipo {self.device_type_id}")
             else:
                 print(f"Borrado device_type con id {self.device_type_id}")
                 self.device_type_id = None
 
         else:
-            print("El objeto tiene una id nula, no se puede borrar")
+            raise NotFoundError("El objeto tiene una id nula, no se puede borrar")
 
 
 
@@ -121,8 +131,8 @@ class TestTemplate:
     def save(self, conn):
         c = conn.cursor()
         if not DeviceType.exists(conn, self.device_type_id):
-            print("El device al que se esta intentando relacionar este test no existe o no es valido")
-            return
+            raise InvalidReferenceError("El device al que se esta intentando relacionar este test no existe o no es valido")
+            
         else:
             if self.test_template_id is None:
                 
@@ -143,7 +153,7 @@ class TestTemplate:
                                 "test_description": self.test_description,
                                 "test_template_id": self.test_template_id})
                     if c.rowcount == 0:
-                        print("No se ha encontrado un objeto con ese id")
+                        raise NotFoundError("No se ha encontrado un objeto con ese id")
                     else:
                         print(f"Actualizado test_template con id {self.test_template_id}")
 
@@ -157,8 +167,8 @@ class TestTemplate:
         row = c.fetchone()
         
         if row is None:
-            print("No se ha encontrado la fila")
-            return None
+            raise NotFoundError("No se ha encontrado un TestTemplate con el id")
+            
         
         return cls(row[0], row[1], row[2], row[3])
 
@@ -166,6 +176,10 @@ class TestTemplate:
     def load_all(cls, conn):
         c = conn.execute("SELECT * FROM test_templates")
         rows = c.fetchall()
+
+        if not rows:
+            raise NotFoundError("No hay ningun TestTemplate")
+            
         
         return [cls(row[0], row[1], row[2], row[3]) for row in rows] 
     
@@ -178,6 +192,10 @@ class TestTemplate:
         )
         
         rows = c.fetchall()
+
+        if not rows:
+            raise NotFoundError("No se ha encontrado ningun TestTemplate relacionado con este DeviceType")
+            
         
         return [cls(row[0], row[1], row[2], row[3]) for row in rows]
     
@@ -206,20 +224,20 @@ class TestTemplate:
             #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
             #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
             if cursor.rowcount == 0:
-                print("No se ha encontrado un objeto con ese id")
+                raise NotFoundError("No se ha encontrado un objeto con ese id")
             else:
                 print(f"Borrado test_template con id {self.test_template_id}")
                 self.test_template_id = None
 
         else:
-            print("El objeto tiene una id nula, no se puede borrar")
+            raise InvalidReferenceError("El objeto tiene una id nula, no se puede borrar")
 
     def change_device_type_id(self, conn, id):
         if not DeviceType.exists(conn, id):
-            print("El device al que se esta intentando relacionar este test no existe o no es valido")
-            return
+            raise InvalidReferenceError("El device al que se esta intentando relacionar este test no existe o no es valido")
+            
         else:
-            self.device_type_id = id
+            self.device_type_id = id    
     
     def change_test_name(self, name):
         self.test_template_name = name
@@ -241,8 +259,8 @@ class RequirementTemplate:
     def save(self, conn):
         c = conn.cursor()
         if not TestTemplate.exists(conn, self.test_template_id):
-            print("El test al que se esta intentando relacionar este test no existe o no es valido")
-            return
+            raise InvalidReferenceError("El test al que se esta intentando relacionar este test no existe o no es valido")
+        
         else:
             if self.requirement_template_id is None:
                 
@@ -261,7 +279,7 @@ class RequirementTemplate:
                                 "requirement_name": self.requirement_name,
                                 "requirement_template_id": self.requirement_template_id})
                     if c.rowcount == 0:
-                        print("No se ha encontrado un objeto con ese id")
+                        raise NotFoundError("No se ha encontrado un objeto con ese id")
                     else:
                         print(f"Actualizado requirement_template con id {self.requirement_template_id}")
 
@@ -274,8 +292,8 @@ class RequirementTemplate:
         row = c.fetchone()
         
         if row is None:
-            print("No se ha encontrado la fila")
-            return None
+            raise NotFoundError("No se ha encontrado la fila")
+            
         
         return cls(row[0], row[1], row[2])
 
@@ -283,6 +301,10 @@ class RequirementTemplate:
     def load_all(cls, conn):
         c = conn.execute("SELECT * FROM requirement_templates")
         rows = c.fetchall()
+
+        if not rows:
+            raise NotFoundError("No hay ningun RequirementTemplate")
+            
         
         return [cls(row[0], row[1], row[2]) for row in rows] 
     
@@ -296,6 +318,11 @@ class RequirementTemplate:
         
         rows = c.fetchall()
         
+        if not rows:
+            raise NotFoundError("No hay ningun RequirementTemplate relacionado con ese TestTemplate")
+            
+
+
         return [cls(row[0], row[1], row[2]) for row in rows]
     
     @classmethod
@@ -323,18 +350,18 @@ class RequirementTemplate:
             #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
             #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
             if cursor.rowcount == 0:
-                print("No se ha encontrado un objeto con ese id")
+                raise NotFoundError("No se ha encontrado un objeto con ese id")
             else:
                 print(f"Borrado requirement_template con id {self.requirement_template_id}")
                 self.requirement_template_id = None
 
         else:
-            print("El objeto tiene una id nula, no se puede borrar")
+            raise InvalidReferenceError("El objeto tiene una id nula, no se puede borrar")
 
     def change_test_template_id(self, conn, id):
         if not TestTemplate.exists(conn, id):
-            print("El test al que se esta intentando relacionar este requerimiento no existe o no es valido")
-            return
+            raise InvalidReferenceError("El test al que se esta intentando relacionar este requerimiento no existe o no es valido")
+            
         else:
             self.test_template_id = id
 
@@ -390,9 +417,8 @@ class Device:
     def save(self, conn):
         c = conn.cursor()
         if self.device_type_id is not None and not DeviceType.exists(conn, self.device_type_id):
-            print("El device_type no existe o no es valido")
-            print("Placeholder jeje, meter excepcion")
-            return
+            raise InvalidReferenceError("El device_type no existe o no es valido")
+            
         else:
             if self.device_id is None:
                 
@@ -429,7 +455,7 @@ class Device:
                                 "device_status": self.device_status,
                                 "device_observations": self.device_observations})
                     if c.rowcount == 0:
-                        print("No se ha encontrado un objeto con ese id")
+                        raise NotFoundError("No se ha encontrado un objeto con ese id")
                     else:
                         print(f"Actualizado device con id {self.device_id}")
 
@@ -442,11 +468,11 @@ class Device:
         
         row = c.fetchone()
         
-        if row is None:
-            print("No se ha encontrado la fila")
-            return None
+        if not row:
+            raise NotFoundError("No se ha encontrado la fila")
+            
         
-        return cls(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+        return cls(row[0], row[1], row[2], row[3], row[4], bool(row[5]), row[6])
     
     @classmethod
     def load_all(cls, conn):
@@ -454,8 +480,12 @@ class Device:
                                 device_location, device_status, device_observations
                             FROM devices""")
         rows = c.fetchall()
+
+        if not rows:
+            raise NotFoundError("No hay ningun dispositivo")
+            
         
-        return [cls(row[0], row[1], row[2], row[3], row[4], row[5], row[6]) for row in rows] 
+        return [cls(row[0], row[1], row[2], row[3], row[4], bool(row[5]), row[6]) for row in rows] 
     
     @classmethod
     def load_by_type(cls, conn, id):
@@ -466,10 +496,10 @@ class Device:
                                 {"device_type": id})
             rows = c.fetchall()
 
-            return [cls(row[0], row[1], row[2], row[3], row[4], row[5], row[6]) for row in rows] 
+            return [cls(row[0], row[1], row[2], row[3], row[4], bool(row[5]), row[6]) for row in rows] 
         else:
-            print("Placeholder, la id a cargar no es valida, meter excepcion")
-            return
+            raise NotFoundError(f"El tipo con id {id} no existe")
+            
         
     @classmethod
     def load_by_location(cls, conn, location):
@@ -480,8 +510,8 @@ class Device:
         rows = c.fetchall()
         
         if not rows:
-            print("Placeholder, No existe dispositivo en esa localizacion, meter excepcion")
-            return
+            raise NotFoundError("No existe dispositivo en esa localizacion")
+            
         else:
             return[cls(row[0], row[1], row[2], row[3], row[4], row[5], row[6]) for row in rows]
     
@@ -514,13 +544,13 @@ class Device:
             #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
             #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
             if cursor.rowcount == 0:
-                print("No se ha encontrado un device con ese id")
+                raise NotFoundError("No se ha encontrado un device con ese id")
             else:
                 print(f"Borrado device con id {self.device_id}")
                 self.device_id = None
 
         else:
-            print("El device tiene una id nula, no se puede borrar")
+            raise InvalidReferenceError("El device tiene una id nula, no se puede borrar")
     
     def get_type(self, conn):
         return DeviceType.load(conn, self.device_type_id)
@@ -561,14 +591,13 @@ class Test:
 
     def save(self, conn):
         c = conn.cursor()
+        #Si el device o el test_template no existe salta un error, al actualizar mira el id de test para llamar a db
         if self.device_id is not None and not Device.exists(conn, self.device_id):
-            print("El device no existe o no es valido")
-            print("Placeholder jeje, meter excepcion")
-            return
+            raise InvalidReferenceError("El device no existe o no es valido")
+
         elif self.test_template_id is not None and not TestTemplate.exists(conn, self.test_template_id):
-            print("El test_template no existe o no es valido")
-            print("Placeholder jeje, meter excepcion")
-            return
+            raise InvalidReferenceError("El test_template no existe o no es valido")
+
         else:
             if self.test_id is None:
                 
@@ -597,7 +626,7 @@ class Test:
                                 "test_status": self.test_status,
                                 "test_observations": self.test_observations})
                     if c.rowcount == 0:
-                        print("No se ha encontrado un objeto con ese id")
+                        raise NotFoundError("No se ha encontrado un objeto con ese id")
                     else:
                         print(f"Actualizado test con id {self.test_id}")
 
@@ -610,10 +639,10 @@ class Test:
         row = c.fetchone()
         
         if row is None:
-            print("No se ha encontrado la fila")
-            return None
+            raise NotFoundError("No se ha encontrado la fila")
+            
         
-        return cls(row[0], row[1], row[2], row[3], row[4])
+        return cls(row[0], row[1], row[2], bool(row[3]), row[4])
     
     @classmethod
     def load_all(cls, conn):
@@ -621,7 +650,11 @@ class Test:
                             FROM tests""")
         rows = c.fetchall()
         
-        return [cls(row[0], row[1], row[2], row[3], row[4]) for row in rows] 
+        if not rows:
+            raise NotFoundError("No existe ningun test")
+            
+
+        return [cls(row[0], row[1], row[2], bool(row[3]), row[4]) for row in rows] 
     
     @classmethod
     def load_by_device(cls, conn, id):
@@ -631,10 +664,14 @@ class Test:
                                 {"device_id": id})
             rows = c.fetchall()
 
-            return [cls(row[0], row[1], row[2], row[3], row[4]) for row in rows] 
+            if not rows:
+                raise NotFoundError("No existe ningun test en este dispositivo")
+                
+
+            return [cls(row[0], row[1], row[2], bool(row[3]), row[4]) for row in rows] 
         else:
-            print("Placeholder, la id a cargar no es valida, meter excepcion")
-            return
+            raise InvalidReferenceError("La id a cargar no es valida")
+            
 
     @classmethod
     #Comprueba que el id exite, util para test
@@ -662,13 +699,13 @@ class Test:
             #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
             #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
             if cursor.rowcount == 0:
-                print("No se ha encontrado un test con ese id")
+                raise NotFoundError("No se ha encontrado un test con ese id")
             else:
                 print(f"Borrado test con id {self.test_id}")
                 self.test_id = None
 
         else:
-            print("El test tiene una id nula, no se puede borrar")
+            raise InvalidReferenceError("El test tiene una id nula, no se puede borrar")
 
     @classmethod
     def delete_by_device(cls, conn, device_id):
@@ -683,12 +720,12 @@ class Test:
 
             # Comprueba si se ha borrado algo
             if cursor.rowcount == 0:
-                print("No había tests para ese device")
+                raise NotFoundError("No hay tests para ese device")
             else:
                 print(f"Borrados tests del device con id {device_id}")
 
         else:
-            print("device_id inválido")
+            raise InvalidReferenceError("device_id inválido")
 
     def get_device(self, conn):
         return Device.load(conn, self.device_id)
@@ -709,8 +746,8 @@ class Requirement:
 
     def change_status(self, conn, status):
         if status not in [True, False]:
-            print("Estatus invalido, meter excepcion aqui")
-            return
+            raise InvalidStatusError("Estatus invalido")
+            
         self.requirement_status = status
         self.save(conn)
         Test.load(conn, self.test_id).update_status(conn)
@@ -718,13 +755,11 @@ class Requirement:
     def save(self, conn):
         c = conn.cursor()
         if self.test_id is not None and not Test.exists(conn, self.test_id):
-            print("El test no existe o no es valido")
-            print("Placeholder jeje, meter excepcion")
-            return
+            raise InvalidReferenceError("El test no existe o no es valido")
+            
         elif self.requirement_template_id is not None and not RequirementTemplate.exists(conn, self.requirement_template_id):
-            print("El requirement_template no existe o no es valido")
-            print("Placeholder jeje, meter excepcion")
-            return
+            raise InvalidReferenceError("El requirement_template no existe o no es valido")
+            
         else:
             if self.requirement_id is None:
                 
@@ -746,7 +781,7 @@ class Requirement:
                                 {"requirement_id": self.requirement_id,
                                 "requirement_status": self.requirement_status})
                     if c.rowcount == 0:
-                        print("No se ha encontrado un objeto con ese id")
+                        raise NotFoundError("No se ha encontrado un objeto con ese id")
                     else:
                         print(f"Actualizado requirement con id {self.requirement_id}")
 
@@ -759,8 +794,8 @@ class Requirement:
         row = c.fetchone()
         
         if row is None:
-            print("No se ha encontrado la fila")
-            return None
+            raise NotFoundError("No se ha encontrado la fila")
+            
         
         return cls(row[0], row[1], row[2], bool(row[3]))
     
@@ -769,6 +804,10 @@ class Requirement:
         c = conn.execute("""SELECT requirement_id, test_id, requirement_template_id, requirement_status
                             FROM requirements""")
         rows = c.fetchall()
+
+        if not rows:
+            raise NotFoundError("No existe ningun Requirement")
+            
         
         return [cls(row[0], row[1], row[2], bool(row[3])) for row in rows] 
 
@@ -780,10 +819,14 @@ class Requirement:
                                 {"test_id": id})
             rows = c.fetchall()
 
+            if not rows:
+                raise NotFoundError("No existe ningun requerimiento para ese test")
+                
+
             return [cls(row[0], row[1], row[2], bool(row[3])) for row in rows] 
         else:
-            print("Placeholder, la id a cargar no es valida, meter excepcion")
-            return
+            raise InvalidReferenceError("La id a cargar no es valida")
+            
         
     def delete(self, conn):
             # Comprueba que el objeto tenga id, el resto de parametros dan igual
@@ -797,13 +840,13 @@ class Requirement:
                 #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
                 #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
                 if cursor.rowcount == 0:
-                    print("No se ha encontrado un requirement con ese id")
+                    raise NotFoundError("No se ha encontrado un requirement con ese id")
                 else:
                     print(f"Borrado requirement con id {self.requirement_id}")
                     self.requirement_id = None
 
             else:
-                print("El requirement tiene una id nula, no se puede borrar")           
+                raise InvalidReferenceError("El requirement tiene una id nula, no se puede borrar")           
 
     @classmethod
     def delete_by_test(cls, conn, test_id):
@@ -818,12 +861,12 @@ class Requirement:
 
             # Comprueba si se ha borrado algo
             if cursor.rowcount == 0:
-                print("No había requirements para ese test")
+                raise NotFoundError("No había requirements para ese test")
             else:
                 print(f"Borrados requirements del test con id {test_id}")
 
         else:
-            print("test_id inválido")
+            raise InvalidReferenceError("test_id inválido")
 
 
     def get_test(self, conn):
