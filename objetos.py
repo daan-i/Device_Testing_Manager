@@ -45,7 +45,7 @@ class DeviceType:
         row = c.fetchone()
         
         if row is None:
-            raise NotFoundError("No se ha encontrado ningun Device con este DeviceType")
+            raise NotFoundError() #"No se ha encontrado ningun Device con este DeviceType", estba dentro del parentesis
             
         
         return cls(row[0], row[1], row[2])

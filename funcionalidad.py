@@ -156,79 +156,110 @@ def list_device_type(header):
         
 def delete_device_type():
 
-    device = DeviceType()
-
     while True:
-        print_header("Delete device type")  
+        print_header("Delete device type")         
 
         list_device_type(0)
         print()
         print("'Back' to return to the previous menu")
         print_separator()
-
-        check = ""
-
-        while check not in ["yes", "ye", "y"]:
-
-            raw = prompt("Choose a device to delete")
-
-            if raw.lower() in ["b", "ba", "bac", "back"]:
-                return
-
-            try:
-                device.device_type_id = int(raw)
-            except ValueError:
-                print("  Invalid id")
-            
-            print_separator() 
-            print("  You are about to create a device type with the following information: ")
-            print(f"  Name: {device.device_type_name}\n  Manufacturer: {device.manufacturer}" )
-            print_separator()
-            check = prompt("Are you sure? [Y/N/Back]").lower()
-
-            if check in ["b", "ba", "bac", "back"]:
-                print_separator()
-                print(" Device Type creation cancelled")
-                return
-
-
         raw = prompt("Choose a device to delete")
 
         if raw.lower() in ["b", "ba", "bac", "back"]:
             return
-
+                
+        conn = get_connection(DB_PATH)
         try:
-            device.device_type_id = int(raw)
-        except ValueError:
-            print("  Invalid id")
-
-        
-        try:
-            conn = get_connection(DB_PATH)
-            device.delete(conn)
-            
-        
-        except NotFoundError as e:
-
-
-            print(f"  {e}")
+            device = DeviceType.load(conn, raw)
+        except NotFoundError:
+            print("  Not found device type with that id")
             print_separator()
+            wait()
+            continue
+        finally:
+            conn.close()
+            
+        print_separator() 
+        print("  You are about to delete a device type with the following information: ")
+        print(f"  Name: {device.device_type_name}\n  Manufacturer: {device.manufacturer}" )
+        print_separator()
+        check = prompt("Are you sure? [Y/N]").lower()
 
-            aux = prompt("Do you still want to delete a device type? [Y/N]").lower()
+        if check not in ("yes", "ye", "y"):
+            continue
+ 
+        conn = get_connection(DB_PATH)
 
+        try:
+            device.delete(conn)
 
-            if aux in ["n", "no"]:
-                return
-        
+        except NotFoundError as e:
+            print(e)  #Esto nunca deberia ejecutarse
         finally:
             conn.close()
 
 
+
+
 def edit_device_type():
 
-    print_header("Edit a device type")
-    
-    list_device_type(0)
+    while True:
+
+        print_header("Edit device type")         
+
+        list_device_type(0)
+        print()
+        print("'Back' to return to the previous menu")
+        print_separator()
+        raw = prompt("Choose a device to delete")
+
+        if raw.lower() in ["b", "ba", "bac", "back"]:
+            return
+                
+        conn = get_connection(DB_PATH)
+        try:
+            device = DeviceType.load(conn, raw)
+        except NotFoundError:
+            print("  Not found device type with that id")
+            print_separator()
+            wait()
+            continue
+        finally:
+            conn.close()
+
+        device_edited = DeviceType(device.device_type_id)
+
+
+        print_separator()
+
+        #The user inputs the new info here
+        device_edited.device_type_name = prompt("Enter device type name")
+        device_edited.manufacturer = prompt("Enter device manufacturer")
+
+        print_separator() 
+
+        #Final comprobation
+        print(f"  You are about to modify device type {device.device_type_id} with the following information: ")
+        print(f"  Name: {device_edited.device_type_name}\n  Manufacturer: {device_edited.manufacturer}" )
+        print_separator()
+        check = prompt("Are you sure? [Y/N]").lower()
+
+        if check not in ("yes", "ye", "y"):
+            continue
+ 
+        conn = get_connection(DB_PATH)
+
+        try:
+            device_edited.save(conn)
+
+        except NotFoundError as e:
+            print(e)  #Esto nunca deberia ejecutarse
+        finally:
+            conn.close()
+
+
+
+
 
 
 
