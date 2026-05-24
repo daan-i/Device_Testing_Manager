@@ -1,7 +1,237 @@
 import sqlite3
+import os
+from objetos import DeviceType, Device, TestTemplate, Test, RequirementTemplate, Requirement
+from excepciones import DeviceManagerError, NotFoundError, InvalidReferenceError, InvalidStatusError
+
+LINE_LENGTH = 75
+DB_PATH = "database.db"
+SCHEMA_PATH = "schema.sql"
 
 def get_connection(db_path: str) -> sqlite3.Connection:
     #Abre conexión con integridad referencial garantizada.
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+def init_database(db_path, schema_path):
+
+    if os.path.exists(db_path):
+        print("The database already exist")
+        return
+    
+    conn = get_connection(db_path)
+
+    with open(schema_path, "r") as f:
+        schema = f.read()
+    
+    try:
+        conn.executescript(schema)
+        conn.commit()
+        print("Database created successfully")
+    finally:
+        conn.close()
+
+
+    #Aqui podria ponerse algo para meterle unos valores predefinidos o algo asi
+
+def reset_database(schema_path):
+    check = prompt("This will delete all data permanently. Are you sure? [Y/N]").lower()
+    
+    if check not in ["yes", "ye", "y"]:
+        print("  Reset cancelled.")
+        return
+
+    if os.path.exists(DB_PATH):
+        os.remove(DB_PATH)
+        print("  Database deleted.")
+
+    with open(schema_path, "r") as f:
+        schema = f.read()
+
+    conn = get_connection(DB_PATH)
+    try:
+        conn.executescript(schema)
+        conn.commit()
+        print("  Database recreated successfully.")
+    finally:
+        conn.close()  
+
+def print_header(text):
+    aux = int((LINE_LENGTH - len(text) - 4)/2)
+    n = "=" * LINE_LENGTH
+    i = "-" * aux + "  " + text + "  " + "-" * aux
+    if len(i) < LINE_LENGTH:
+        i += "-"
+
+    print(n)
+    print(i)
+    print(n)
+
+def print_separator():
+    n = "-" * LINE_LENGTH
+    print(n)
+
+#Pide un dato al usuario y lo toma como input sin espacios
+def prompt(message):
+    return input(f"  > {message}: ").strip()
+
+def wait():
+    input("\n  Press Enter to continue...")
+
+def menu_device_types():
+    while True:
+        print_header("Menu Device Types")
+        print("  1. Create new device type")
+        print("  2. List all the device types")
+        print("  3. Edit a device type")
+        print("  4. Delete a device type")
+        print("  0. Exit")
+        print_separator()
+        try:
+            aux = int(prompt("Choose an option"))
+        except ValueError:
+            print("  Invalid option.")
+            continue
+        
+        match aux:
+            case 1:
+                create_device_type()
+            case 2: 
+                list_device_type(1)
+                wait()
+            case 3:
+                edit_device_type()
+            case 4:
+                delete_device_type()
+            case 0:
+                return
+
+def create_device_type():
+    print_header("Create device type")
+
+    deviceType = DeviceType()
+    check = "NO"
+
+    while check not in ["yes", "ye", "y"]:
+        deviceType.device_type_name = prompt("Enter device type name")
+        deviceType.manufacturer = prompt("Enter device manufacturer")
+
+        print_separator() 
+        print("  You are about to create a device type with the following information: ")
+        print(f"  Name: {deviceType.device_type_name}\n  Manufacturer: {deviceType.manufacturer}" )
+        print_separator()
+        check = prompt("Are you sure? [Y/N/Back]").lower()
+
+        if check in ["b", "ba", "bac", "back"]:
+            print_separator()
+            print(" Device Type creation cancelled")
+            return
+        
+    conn = get_connection(DB_PATH)
+
+    try:
+        deviceType.save(conn)
+        print("  Device Type saved successfully")
+    finally:
+        conn.close()
+    wait()
+    
+
+    
+def list_device_type(header):
+
+    if header == 1:
+        print_header("List of device types")
+    
+    conn = get_connection(DB_PATH)
+    try:
+        deviceTypesList = DeviceType.load_all(conn)
+        for type in deviceTypesList:
+            print(f"  {type.device_type_id}. {type.device_type_name}, {type.manufacturer}")
+    except NotFoundError:
+        print("  No device types found")
+    finally:
+        conn.close()
+
+        
+def delete_device_type():
+
+    device = DeviceType()
+
+    while True:
+        print_header("Delete device type")  
+
+        list_device_type(0)
+        print()
+        print("'Back' to return to the previous menu")
+        print_separator()
+
+        check = ""
+
+        while check not in ["yes", "ye", "y"]:
+
+            raw = prompt("Choose a device to delete")
+
+            if raw.lower() in ["b", "ba", "bac", "back"]:
+                return
+
+            try:
+                device.device_type_id = int(raw)
+            except ValueError:
+                print("  Invalid id")
+            
+            print_separator() 
+            print("  You are about to create a device type with the following information: ")
+            print(f"  Name: {device.device_type_name}\n  Manufacturer: {device.manufacturer}" )
+            print_separator()
+            check = prompt("Are you sure? [Y/N/Back]").lower()
+
+            if check in ["b", "ba", "bac", "back"]:
+                print_separator()
+                print(" Device Type creation cancelled")
+                return
+
+
+        raw = prompt("Choose a device to delete")
+
+        if raw.lower() in ["b", "ba", "bac", "back"]:
+            return
+
+        try:
+            device.device_type_id = int(raw)
+        except ValueError:
+            print("  Invalid id")
+
+        
+        try:
+            conn = get_connection(DB_PATH)
+            device.delete(conn)
+            
+        
+        except NotFoundError as e:
+
+
+            print(f"  {e}")
+            print_separator()
+
+            aux = prompt("Do you still want to delete a device type? [Y/N]").lower()
+
+
+            if aux in ["n", "no"]:
+                return
+        
+        finally:
+            conn.close()
+
+
+def edit_device_type():
+
+    print_header("Edit a device type")
+    
+    list_device_type(0)
+
+
+
+
+
+menu_device_types()

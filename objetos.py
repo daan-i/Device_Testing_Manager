@@ -18,7 +18,7 @@ class DeviceType:
                             {"device_type_name": self.device_type_name, 
                             "manufacturer": self.manufacturer})
             self.device_type_id = c.lastrowid
-            print(f"Insertado device_type con id {self.device_type_id}")
+            #print(f"Insertado device_type con id {self.device_type_id}")
 
         else:
             with conn:
@@ -30,7 +30,8 @@ class DeviceType:
                 if c.rowcount == 0:
                     raise NotFoundError(f"No se ha encontrado un objeto con la id {self.device_type_id}")
                 else:
-                    print(f"Actualizado device_type con id {self.device_type_id}")
+                    #print(f"Actualizado device_type con id {self.device_type_id}")
+                    return
                         
                 
         
@@ -91,7 +92,7 @@ class DeviceType:
 
     def delete(self, conn):
          # Comprueba que el objeto tenga id, el resto de parametros dan igual
-        if self.device_type_id is not None:
+        if self.device_type_id != None:
 
             with conn:
                 cursor = conn.execute(
@@ -101,13 +102,12 @@ class DeviceType:
             #Comprueba que el cursor ha modificado alguna fila, si no manda el mensaje
             #Esto es mas eficiente que comprobar si el objeto existe y luego eliminarlo porque solo se hace una query
             if cursor.rowcount == 0:
-                raise NotFoundError(f"No se ha encontrado un objeto con el id de tipo {self.device_type_id}")
+                raise NotFoundError(f"Device type with id {self.device_type_id} was not found")
             else:
-                print(f"Borrado device_type con id {self.device_type_id}")
-                self.device_type_id = None
+                print(f"Deleted device type with id {self.device_type_id}")
 
         else:
-            raise NotFoundError("El objeto tiene una id nula, no se puede borrar")
+            raise NotFoundError("The id is null, the device type could not be deleted")
 
 
 
