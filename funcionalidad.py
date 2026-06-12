@@ -146,8 +146,8 @@ def list_device_type(header):
     conn = get_connection(DB_PATH)
     try:
         deviceTypesList = DeviceType.load_all(conn)
-        for type in deviceTypesList:
-            print(f"  {type.device_type_id}. {type.device_type_name}, {type.manufacturer}")
+        for t in deviceTypesList:
+            print(f"  {t.device_type_id}. {t.device_type_name}, {t.manufacturer}")
     except NotFoundError:
         print("  No device types found")
     finally:
@@ -211,7 +211,7 @@ def edit_device_type():
         print()
         print("'Back' to return to the previous menu")
         print_separator()
-        raw = prompt("Choose a device to delete")
+        raw = prompt("Choose a device to edit")
 
         if raw.lower() in ["b", "ba", "bac", "back"]:
             return
@@ -234,7 +234,15 @@ def edit_device_type():
 
         #The user inputs the new info here
         device_edited.device_type_name = prompt("Enter device type name")
+
+        #If the input is empty, the previous information is kept
+        if device_edited.device_type_name == "":
+            device_edited.device_type_name = device.device_type_name
+
         device_edited.manufacturer = prompt("Enter device manufacturer")
+
+        if device_edited.manufacturer == "":
+            device_edited.manufacturer = device.manufacturer
 
         print_separator() 
 
